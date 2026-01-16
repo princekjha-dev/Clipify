@@ -1,0 +1,16 @@
+# Core dependencies
+yt-dlp
+whisper
+openai-whisper
+
+# Video processing
+ffmpeg-python
+
+# Free AI APIs (RECOMMENDED)
+groq           # FREE Whisper + Llama
+
+# Paid APIs (optional)
+openai        # OpenAI Whisper/GPT
+
+# Utilities
+python-dotenv
