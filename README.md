@@ -1,4 +1,4 @@
-cfh
+#Clipfy
 ## ✨ Key Features
 
 - 🎥 **Automatic Video Clipping** - Extract engaging moments from long-form videos using AI
@@ -372,4 +372,5 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 ---
 
 **Made with ❤️ for content creators**
+
 
