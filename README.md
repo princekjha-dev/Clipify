@@ -1,12 +1,4 @@
-# Clipify
-
-![Clipify Logo](src/logo.png)
-
-> **Production-grade AI-powered video clipping tool** - Transform long-form videos into viral short clips with automated moment extraction, intelligent filtering, and smart formatting.
-
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
+cfh
 ## ✨ Key Features
 
 - 🎥 **Automatic Video Clipping** - Extract engaging moments from long-form videos using AI
@@ -380,3 +372,4 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 ---
 
 **Made with ❤️ for content creators**
+
