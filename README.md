@@ -19,7 +19,7 @@ A powerful Python application that automatically extracts viral moments from vid
 **Option A: Install from source**
 ```bash
 # Clone or download the repository
-git clone https://github.com/yourusername/clipify.git
+git clone https://github.com/princekjha-dev/Clipify.git
 cd clipify
 
 # Install dependencies
