@@ -8,9 +8,12 @@ import os
 import time
 import subprocess
 import tempfile
+import json
 
 # Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 WHISPER_MODEL = "whisper-1"
 MAX_RETRIES = 3
 
@@ -19,7 +22,8 @@ def transcribe_video(
         video_path: Path,
         model_size: str = 'base',
         language: Optional[str] = None,
-        transcriber_func: Optional[Callable] = None
+        transcriber_func: Optional[Callable] = None,
+        provider: Optional[str] = None
 ) -> List[Dict]:
     """
     Transcribe video using specified method or OpenAI Whisper API
@@ -38,11 +42,29 @@ def transcribe_video(
     if transcriber_func is not None:
         print(f"  Transcribing with custom transcriber...")
         return transcriber_func(video_path, model_size, language)
-    
-    # Try OpenAI API if available
+
+    # Provider preference from parameter
+    provider = provider.lower() if provider else None
+
+    if provider == 'gemini' and GEMINI_API_KEY:
+        return _transcribe_with_gemini(video_path, language)
+
+    if provider == 'anthropic' and ANTHROPIC_API_KEY:
+        return _transcribe_with_anthropic(video_path, language)
+
+    if provider == 'openai' and OPENAI_API_KEY:
+        return _transcribe_with_openai(video_path, language)
+
+    # Automatic provider selection order
+    if GEMINI_API_KEY:
+        return _transcribe_with_gemini(video_path, language)
+
+    if ANTHROPIC_API_KEY:
+        return _transcribe_with_anthropic(video_path, language)
+
     if OPENAI_API_KEY:
         return _transcribe_with_openai(video_path, language)
-    
+
     # Fallback to local Whisper
     print(f"  No API key found, using local Whisper...")
     return _transcribe_with_local_whisper(video_path, model_size, language)
@@ -112,6 +134,104 @@ def _transcribe_with_openai(
 
     finally:
         # Cleanup temp audio file
+        if audio_path != video_path and audio_path.exists():
+            audio_path.unlink()
+
+
+def _transcribe_with_anthropic(
+        video_path: Path,
+        language: Optional[str] = None
+) -> List[Dict]:
+    """Transcribe using Anthropic API"""
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY not set")
+
+    try:
+        from anthropic import Anthropic
+        client = Anthropic(api_key=ANTHROPIC_API_KEY)
+    except ImportError:
+        raise ImportError("anthropic package not installed. Run: pip install anthropic")
+
+    print(f"  Transcribing with Anthropic Whisper API...")
+    audio_path = extract_audio_for_transcription(video_path)
+
+    try:
+        with open(audio_path, "rb") as audio_file:
+            response = client.audio.transcriptions.create(
+                model="claude-transcribe-1",
+                file=audio_file,
+                language=language or "en"
+            )
+
+        # Convert response to segments
+        segments = []
+        for seg in getattr(response, 'segments', []) or []:
+            segments.append({
+                'start': seg.get('start', 0),
+                'end': seg.get('end', 0),
+                'text': seg.get('text', '').strip(),
+                'words': []
+            })
+
+        if not segments:
+            text = getattr(response, 'text', '') or ''
+            duration = _get_video_duration(video_path)
+            segments = [{'start': 0, 'end': duration, 'text': text.strip(), 'words': []}]
+
+        return segments
+
+    except Exception as e:
+        print(f"  ✗ Anthropic Transcription failed: {e}")
+        raise
+
+    finally:
+        if audio_path != video_path and audio_path.exists():
+            audio_path.unlink()
+
+
+def _transcribe_with_gemini(
+        video_path: Path,
+        language: Optional[str] = None
+) -> List[Dict]:
+    """Transcribe using Google Gemini API"""
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY not set")
+
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        raise ImportError("google-generativeai package not installed. Run: pip install google-generativeai")
+
+    genai.configure(api_key=GEMINI_API_KEY)
+    print(f"  Transcribing with Gemini API...")
+
+    audio_path = extract_audio_for_transcription(video_path)
+
+    try:
+        with open(audio_path, "rb") as audio_file:
+            response = genai.audio.speech_to_text(
+                model="gpt-4o-audio-preview",
+                audio_file=audio_file,
+                language=language or "en-US"
+            )
+
+        text = response.text if hasattr(response, 'text') else str(response)
+        duration = _get_video_duration(video_path)
+
+        segments = [{
+            'start': 0,
+            'end': duration,
+            'text': text.strip(),
+            'words': []
+        }]
+
+        return segments
+
+    except Exception as e:
+        print(f"  ✗ Gemini Transcription failed: {e}")
+        raise
+
+    finally:
         if audio_path != video_path and audio_path.exists():
             audio_path.unlink()
 
@@ -274,6 +394,21 @@ def extract_audio_for_transcription(video_path: Path) -> Path:
     except Exception as e:
         print(f"  Warning: Audio extraction failed: {e}")
         return video_path
+
+
+def _get_video_duration(video_path: Path) -> float:
+    """Get duration for a video file using ffprobe"""
+    try:
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', str(video_path)],
+            capture_output=True,
+            text=True,
+            timeout=15
+        )
+        data = json.loads(result.stdout)
+        return float(data.get('format', {}).get('duration', 0) or 0)
+    except Exception:
+        return 0.0
 
 
 def transcribe_with_retry(

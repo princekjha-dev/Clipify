@@ -76,24 +76,42 @@ def get_available_providers(logger) -> Dict[str, Tuple]:
     else:
         providers["openai"] = (None, "⚠ OpenAI (no API key set)", False)
     
-    # Local is always available
-    from ai.local_provider import LocalProvider
-    providers["local"] = (LocalProvider, "ℹ Local Processing (No API needed)", True)
-    
-    return providers
+    # Check Anthropic
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    if anthropic_key and anthropic_key.strip():
+        try:
+            from ai.anthropic_provider import AnthropicProvider
+            provider = AnthropicProvider()
+            try:
+                if provider.health_check():
+                    providers["anthropic"] = (AnthropicProvider, "✓ Anthropic (Claude)", True)
+                else:
+                    providers["anthropic"] = (AnthropicProvider, "✗ Anthropic (health check failed)", False)
+            except Exception as e:
+                providers["anthropic"] = (AnthropicProvider, f"✗ Anthropic (Invalid key or connection error)", False)
+        except ImportError:
+            providers["anthropic"] = (None, "⚠ Anthropic (library not installed: pip install anthropic)", False)
+    else:
+        providers["anthropic"] = (None, "⚠ Anthropic (no API key set)", False)
 
+    # Check Gemini
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if gemini_key and gemini_key.strip():
+        try:
+            from ai.gemini_provider import GeminiProvider
+            provider = GeminiProvider()
+            try:
+                if provider.health_check():
+                    providers["gemini"] = (GeminiProvider, "✓ Gemini (Google)", True)
+                else:
+                    providers["gemini"] = (GeminiProvider, "✗ Gemini (health check failed)", False)
+            except Exception as e:
+                providers["gemini"] = (GeminiProvider, f"✗ Gemini (Invalid key or connection error)", False)
+        except ImportError:
+            providers["gemini"] = (None, "⚠ Gemini (library not installed: pip install google-generativeai)", False)
+    else:
+        providers["gemini"] = (None, "⚠ Gemini (no API key set)", False)
 
-def select_ai_provider(logger, provider_name: Optional[str] = None):
-    """
-    Select AI provider with optional user preference
-    
-    Args:
-        logger: Logger instance
-        provider_name: Optional provider name ('groq', 'deepseek', 'openai', 'local')
-                      If None, shows interactive menu
-    
-    Returns:
-        Selected provider instance
     """
     
     logger.header("SELECTING AI PROVIDER")
@@ -203,6 +221,12 @@ def show_provider_status(logger):
             elif name == "deepseek":
                 logger.info(f"  → Set DEEPSEEK_API_KEY environment variable")
                 logger.info(f"  → Get key: https://platform.deepseek.com/api_keys")
+            elif name == "anthropic":
+                logger.info(f"  → Set ANTHROPIC_API_KEY environment variable")
+                logger.info(f"  → Get key: https://console.anthropic.com")
+            elif name == "gemini":
+                logger.info(f"  → Set GEMINI_API_KEY environment variable")
+                logger.info(f"  → Get key: https://developers.generativeai.google.com")
     
     logger.info("")
     logger.info("To use auto-generation (no API needed): use --local flag or --provider local")

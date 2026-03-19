@@ -134,6 +134,14 @@ Examples:
         type=str,
         help="Path to cookies.txt file for YouTube authentication"
     )
+
+    parser.add_argument(
+        "--ai",
+        type=str,
+        choices=["groq", "deepseek", "openai", "anthropic", "gemini", "local"],
+        default=None,
+        help="Preferred AI provider (default auto-select)"
+    )
     
     return parser
 
@@ -150,6 +158,7 @@ def validate_inputs(args: argparse.Namespace, logger: Logger) -> Dict[str, Any]:
         "generate_captions": not args.no_captions,
         "verbose": args.verbose,
         "cookies": Path(args.cookies) if args.cookies else None,
+        "ai_provider": args.ai,
     }
     
     # Validate clip count
@@ -191,7 +200,8 @@ def process_video(video_path: Path, config: Dict[str, Any], logger: Logger) -> D
         # Step 1: Transcribe video
         logger.info("📝 Transcribing video...")
         try:
-            transcript = transcribe_video(video_path)
+            provider = config.get('ai_provider')
+            transcript = transcribe_video(video_path, provider=provider)
             results["transcript"] = transcript
             logger.success(f"Transcription complete ({len(transcript)} segments)")
         except Exception as e:
