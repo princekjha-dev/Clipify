@@ -1,376 +1,245 @@
-#Clipfy
-## ✨ Key Features
+# Clipify - AI-Powered Viral Clip Generator
 
-- 🎥 **Automatic Video Clipping** - Extract engaging moments from long-form videos using AI
-- 🧠 **AI-Powered Analysis** - Transcription via OpenAI Whisper + scoring via multiple AI providers
-- 🎯 **Smart Filtering** - Removes weak hooks, silence, and improper word cuts
-- 📱 **Multi-Platform Support** - Auto-formats for TikTok, Instagram Reels, YouTube Shorts (9:16, 16:9, 1:1, 4:5)
-- 🌐 **YouTube Integration** - Direct YouTube URL support via yt-dlp
-- 🤖 **Multi-AI Provider Support** - Choose from Groq, DeepSeek, OpenAI, or Local processing
-- 📊 **Explainable Scores** - Understand why each clip was selected
-- 🔄 **Batch Processing** - Process multiple videos automatically
-- 📁 **Folder Watch Mode** - Monitor folder for new videos and auto-process
+A powerful Python application that automatically extracts viral moments from videos and generates multi-format clips optimized for social media.
 
-## 🚀 Quick Start
+## Features
 
-### Installation
+- 🎬 **YouTube Download** - Download videos with automatic authentication handling
+- 📝 **Auto Transcription** - Transcribe videos using Whisper API or local models
+- 🎯 **Viral Moment Detection** - AI-powered detection of viral moments in videos
+- ✂️ **Clip Extraction** - Fast stream-copy based clip extraction (no re-encoding)
+- 🎨 **Multi-Format Generation** - Generate clips in multiple aspect ratios (9:16, 16:9, etc.)
+- 📊 **Moment Scoring** - Automatic ranking of moments by viral potential
+- 📝 **Caption Generation** - Auto-generate captions for accessibility
 
+## Quick Start
+
+### 1. Installation
+
+**Option A: Install from source**
 ```bash
-# Clone repository
-git clone https://github.com/princekjha-dev/clipify.git
+# Clone or download the repository
+git clone https://github.com/yourusername/clipify.git
 cd clipify
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### Environment Setup
+**Option B: Install as package**
+```bash
+# Install directly from source
+pip install .
+# Or for development
+pip install -e .
+```
+
+### 2. Get YouTube Cookies (if downloading from YouTube)
+
+YouTube requires authentication. Get cookies with this helper script:
 
 ```bash
-# Copy example environment file
-cp .env.example .env
-
-# Edit .env with your API keys (optional - see options below)
+python get_youtube_cookies.py
 ```
 
-### Process Your First Video
+Follow the on-screen instructions to:
+1. Install the browser extension
+2. Export YouTube cookies
+3. Save as `cookies.txt`
+
+### 3. Basic Usage
+
+**Process a local video:**
+```bash
+python clipify.py --video my_video.mp4 --output clips
+```
+
+**Download and process a YouTube video:**
+```bash
+python clipify.py --url https://www.youtube.com/watch?v=... --output clips --cookies cookies.txt
+```
+
+**Test YouTube download:**
+```bash
+python test_download.py --url https://www.youtube.com/watch?v=... --output downloads
+```
+
+## Advanced Usage
+
+### Options
+
+```
+--url URL                 YouTube video URL
+--video VIDEO            Local video file path
+-o, --output OUTPUT      Output directory (default: output)
+--clips CLIPS            Number of clips to extract (default: 50)
+--formats FORMATS        Video formats: 9:16 16:9 1:1 (default: 9:16 16:9)
+--quality QUALITY        Video quality: low/medium/high (default: high)
+--captions               Generate captions (default: enabled)
+--no-captions            Skip caption generation
+--cookies COOKIES        Path to cookies.txt for YouTube auth
+--verbose                Enable verbose logging
+```
+
+### Examples
 
 ```bash
-# Process a YouTube video
-python clipify.py "https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
+# Download YouTube video with specific settings
+python clipify.py --url "https://youtube.com/watch?v=..." \
+  --output clips \
+  --clips 20 \
+  --quality high \
+  --formats 9:16 16:9 1:1 \
+  --cookies cookies.txt
 
-# Process a local video file
-python clipify.py "path/to/your/video.mp4"
+# Process local video with verbose output
+python clipify.py --video podcast.mp4 --output clips --clips 15 --verbose
 
-# View all available options
-python clipify.py --help
+# Generate without captions for faster processing
+python clipify.py --video video.mp4 --output clips --no-captions
+
+# Test if cookies work
+python test_download.py --url "https://youtube.com/watch?v=..." \
+  --output downloads \
+  --cookies cookies.txt
 ```
 
-## 🤖 AI Provider Options
-
-Clipify supports multiple AI providers. Choose the one that works best for you:
-
-| Provider | Speed | Cost | Quality | Setup |
-|----------|-------|------|---------|-------|
-| **Groq** ⭐ | ⚡⚡⚡ Fastest | 🆓 FREE | 90% | 2 min |
-| **DeepSeek** | ⚡⚡⚡ Fastest | 💰 Ultra-cheap | 88% | 2 min |
-| **OpenAI** | ⚡ Moderate | 💳 Paid | 95% | 3 min |
-| **Local** | ⚡⚡ Fast | 🆓 FREE | 85% | 0 min |
-
-### Setup Your AI Provider
-
-#### 1. Groq (Recommended - FREE)
-```bash
-# 1. Go to https://console.groq.com/keys
-# 2. Create API key
-# 3. Add to .env:
-GROQ_API_KEY=your_key_here
-
-# Test it:
-python clipify.py "video.mp4" --provider groq
-```
-
-#### 2. DeepSeek (Ultra-cheap)
-```bash
-# 1. Go to https://platform.deepseek.com/api_keys
-# 2. Create API key
-# 3. Add to .env:
-DEEPSEEK_API_KEY=your_key_here
-
-# Test it:
-python clipify.py "video.mp4" --provider deepseek
-```
-
-#### 3. OpenAI (Best Quality)
-```bash
-# 1. Go to https://platform.openai.com/api/keys
-# 2. Create API key
-# 3. Add to .env:
-OPENAI_API_KEY=your_key_here
-
-# Test it:
-python clipify.py "video.mp4" --provider openai
-```
-
-#### 4. Local (No API needed)
-```bash
-# Uses local Whisper model - no API key required
-python clipify.py "video.mp4" --provider local
-```
-
-### Check Available Providers
-```bash
-python clipify.py --show-providers
-```
-
-Output:
-```
-PROVIDER STATUS
-  ✓ Groq (Free & Fast)
-  ⚠ DeepSeek (no API key set)
-  ✓ OpenAI (Paid)
-  ℹ Local Processing (No API needed)
-```
-
-## 📖 Usage Examples
-
-### Process Single Video
-```bash
-python clipify.py "path/to/video.mp4"
-python clipify.py "https://www.youtube.com/watch?v=VIDEO_ID"
-```
-
-### Process with Specific Provider
-```bash
-python clipify.py "video.mp4" --provider groq
-python clipify.py "video.mp4" --provider openai
-```
-
-### Control Output Format
-```bash
-# Generate 10 clips in TikTok format (9:16)
-python clipify.py "video.mp4" --clips 10 --formats 9:16
-
-# Multiple formats for different platforms
-python clipify.py "video.mp4" --formats 9:16,16:9,1:1
-```
-
-### Batch Processing
-```bash
-# Process all videos in folder
-python clipify.py --batch --input ./videos --provider groq
-```
-
-### Watch Folder for New Videos
-```bash
-# Monitor folder and auto-process new videos
-python clipify.py --watch --input ./videos --provider groq
-```
-
-## 📁 Output Structure
-
-```
-output/
-├── 20260116_150320/              # Timestamp folder
-│   ├── clips/
-│   │   ├── clip_01_9x16.mp4      # TikTok/Reels format
-│   │   ├── clip_02_16x9.mp4      # YouTube format
-│   │   └── ...
-│   ├── captions/
-│   │   ├── clip_01.srt
-│   │   └── clip_02.srt
-│   ├── timestamps/
-│   │   └── metadata.json
-│   ├── reports/
-│   │   └── analysis.json
-│   └── temp/                      # Temporary files
-```
-
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 clipify/
-├── core/                          # Core video processing
-│   ├── downloader.py              # YouTube/file download
-│   ├── transcriber.py             # Audio transcription
-│   ├── clip_processor.py          # FFmpeg operations
-│   └── formatter.py               # Multi-platform formatting
-├── moments/                       # Moment extraction & scoring
-│   ├── extractor.py               # Find candidate moments
-│   ├── filter.py                  # Smart filtering
-│   └── scorer.py                  # AI quality scoring
-├── audio_analysis/
-│   └── silence_detector.py        # Silence detection
-├── alignment/
-│   └── word_aligner.py            # Word-level timestamps
-├── text_signals/
-│   ├── hook_detector.py           # Hook detection
-│   └── statement_analyzer.py      # Content analysis
-├── captions/
-│   └── generator.py               # Caption generation
-├── ai/                            # AI provider abstraction
-│   ├── provider_selector.py       # Provider selection
-│   ├── groq_provider.py           # Groq integration
-│   ├── deepseek_provider.py       # DeepSeek integration
-│   ├── openai_provider.py         # OpenAI integration
-│   └── local_provider.py          # Local processing
-├── utils/
-│   ├── logger.py                  # Logging
-│   ├── errors.py                  # Error handling
-│   └── healthcheck.py             # Health checks
-├── clipify.py                     # Main entry point
-└── requirements.txt               # Dependencies
+├── ai/                    # AI provider integrations (Groq, OpenAI, etc.)
+├── alignment/             # Word alignment for captions
+├── audio_analysis/        # Audio processing and analysis
+├── captions/              # Caption generation
+├── core/                  # Core functionality
+│   ├── downloader.py     # YouTube/video downloads
+│   ├── transcriber.py    # Video transcription
+│   ├── clip_processor.py # Clip extraction
+│   └── formatter.py      # Multi-format conversion
+├── moments/               # Moment detection and scoring
+├── text_signals/          # Text analysis
+├── utils/                 # Utilities and configuration
+├── clipify.py            # Main entry point
+├── get_youtube_cookies.py # Helper to get cookies
+└── test_download.py      # Test download functionality
 ```
 
-## 🔧 Configuration
+## Configuration
 
-### Command-Line Options
+Edit `utils/config.py` to customize:
+
+```python
+# Default clip count
+DEFAULT_CLIP_COUNT = 50
+
+# Clip length constraints (seconds)
+MIN_CLIP_LENGTH = 25
+MAX_CLIP_LENGTH = 50
+TARGET_CLIP_LENGTH = 35
+
+# Output formats
+DEFAULT_FORMATS = ["9:16", "16:9"]
+
+# Video quality
+VIDEO_QUALITY = "high"  # low, medium, high
+```
+
+## Troubleshooting
+
+### YouTube Authentication Error
+
+If you get "Sign in to confirm you're not a bot" error:
 
 ```bash
-python clipify.py --help
+# Step 1: Get cookies
+python get_youtube_cookies.py
 
-Options:
-  FILE                    Video file or YouTube URL
-  --provider PROVIDER     AI provider (groq, deepseek, openai, local)
-  --show-providers        Show available AI providers
-  --clips N               Number of clips to extract (default: 8)
-  --min-length SEC        Minimum clip length (default: 15)
-  --max-length SEC        Maximum clip length (default: 60)
-  --formats FORMATS       Output formats (9:16,16:9,1:1,4:5)
-  --batch                 Batch mode - process folder
-  --input DIR             Input directory for batch mode
-  --watch                 Watch folder for new videos
-  --output DIR            Output directory (default: output/)
+# Step 2: Run with cookies
+python clipify.py --url "https://youtube.com/watch?v=..." --cookies cookies.txt
 ```
 
-### Environment Variables
+### Transcription Fails
 
-Create `.env` file in project root:
+Make sure you have:
+- OpenAI API key set in environment: `OPENAI_API_KEY`
+- Or install local Whisper: `pip install openai-whisper`
 
-```env
-# AI Providers (choose at least one)
-GROQ_API_KEY=your_groq_key
-DEEPSEEK_API_KEY=your_deepseek_key
-OPENAI_API_KEY=your_openai_key
+### Slow Clip Extraction
 
-# Optional: YouTube (for private videos)
-YOUTUBE_EMAIL=your_email
-YOUTUBE_PASSWORD=your_password
+- Use `--no-captions` to skip caption generation
+- Reduce `--clips` count
+- Use `--quality low` for faster processing
 
-# Optional: Processing
-FFmpeg_PATH=/path/to/ffmpeg
+### FFmpeg Not Found
+
+Install FFmpeg:
+- Windows: `choco install ffmpeg` or download from ffmpeg.org
+- macOS: `brew install ffmpeg`
+- Linux: `sudo apt install ffmpeg`
+
+## Environment Variables
+
+```bash
+# OpenAI/Whisper API
+OPENAI_API_KEY=sk_...
+
+# Alternative AI providers
+GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=...
+OPENROUTER_API_KEY=...
 ```
 
-## 🧠 How It Works
+## Performance Tips
+
+1. **Faster Processing**: Skip captions with `--no-captions`
+2. **Lower Quality**: Use `--quality low` for faster extraction
+3. **Fewer Clips**: Reduce `--clips` count
+4. **Parallel Processing**: System uses all CPU cores by default
+
+## Output Structure
 
 ```
-Input Video
-    ↓
-[1] Download/Load Video
-    ↓
-[2] Extract Audio & Transcribe (Whisper)
-    ↓
-[3] Extract Candidate Moments
-    - Energy peaks
-    - Speech patterns
-    - Silence breaks
-    ↓
-[4] Apply Filters
-    - Remove weak hooks
-    - Check duration
-    - Validate word boundaries
-    ↓
-[5] Score with AI
-    - Engagement potential
-    - Topic quality
-    - Hook strength
-    ↓
-[6] Format for Multiple Platforms
-    - 9:16 (TikTok/Reels)
-    - 16:9 (YouTube)
-    - 1:1 (Instagram Square)
-    - 4:5 (Instagram Story)
-    ↓
-[7] Generate Captions
-    ↓
-Output Clips
+output/
+├── downloads/           # Downloaded videos
+├── clips/              # Extracted clips
+├── formatted/
+│   ├── 9x16/          # Clips in 9:16 aspect ratio
+│   └── 16x9/          # Clips in 16:9 aspect ratio
+└── metadata/          # JSON metadata about moments
 ```
 
-## 📊 Performance
+## API Keys
 
-- **Processing Time**: 2-5 minutes per hour of video (depends on provider)
-- **Quality**: 1080p @ 30fps with automatic audio normalization
-- **Accuracy**: 85-95% depending on AI provider
-- **Batch Mode**: Process multiple videos sequentially
+For AI-powered moment extraction, get API keys from:
+- **OpenAI**: https://platform.openai.com/api-keys
+- **Groq**: https://console.groq.com
+- **Google Gemini**: https://aistudio.google.com/app/apikey
+- **OpenRouter**: https://openrouter.ai/keys
 
-## 🔍 Troubleshooting
+## Limitations
 
-### No provider available
-```
-Error: No AI provider available
+- YouTube downloads require valid cookies due to anti-bot protection
+- Age-restricted videos may fail without proper authentication
+- Large videos may take significant time to process
+- Transcription accuracy depends on audio quality and language
 
-Solutions:
-1. Check .env file for API keys
-2. Run: python clipify.py --show-providers
-3. Set up at least one AI provider (Groq recommended)
-```
+## Contributing
 
-### FFmpeg not found
-```
-Error: ffmpeg not found in PATH
+Contributions welcome! Areas for improvement:
+- Additional AI provider integrations
+- Better moment detection algorithms
+- More output format options
+- Batch processing improvements
 
-Solution: Install from https://ffmpeg.org/download.html
-- Windows: Download from website or use: choco install ffmpeg
-- Mac: brew install ffmpeg
-- Linux: sudo apt-get install ffmpeg
-```
+## License
 
-### Out of quota
-```
-Error: API quota exceeded
+MIT License - See LICENSE file for details
 
-Solutions:
-1. Switch to different provider (e.g., --provider groq)
-2. Wait for quota reset (usually monthly)
-3. Consider paid tier for higher limits
-```
+## Support
 
-### Video processing fails
-```
-Error: Failed to process video
-
-Solutions:
-1. Check video format is supported (MP4, MKV, MOV)
-2. Ensure FFmpeg can read the file
-3. Check disk space for temporary files
-4. Try with smaller video or specific --max-length
-```
-
-## 💡 Tips & Best Practices
-
-1. **Start with Groq** - It's free and fast, perfect for testing
-2. **Use batch mode** for multiple videos to save API calls
-3. **Monitor clips folder** - Videos auto-refresh as processing completes
-4. **Adjust --clips parameter** - More clips = more API calls
-5. **Test with --provider local** first to see if content works
-6. **Check timestamp folder** for detailed analysis and reports
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Test thoroughly
-5. Commit with clear messages (`git commit -m 'Add amazing feature'`)
-6. Push to your branch
-7. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
-
-## 🙏 Acknowledgments
-
-- [OpenAI Whisper](https://github.com/openai/whisper) - Speech-to-text
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - YouTube downloading
-- [FFmpeg](https://ffmpeg.org/) - Video processing
-- [Groq](https://console.groq.com/) - Fast LLM inference
-- [DeepSeek](https://platform.deepseek.com/) - Cost-effective LLM
-- [OpenAI](https://openai.com/) - GPT models
-
-## 📧 Support
-
-- **Issues**: [GitHub Issues](https://github.com/princekjha-dev/clipify/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/princekjha-dev/clipify/discussions)
-
----
-
-**Made with ❤️ for content creators**
-
-
+For issues or questions:
+1. Check the troubleshooting section above
+2. Run `python test_download.py` to test downloads
+3. Run `python get_youtube_cookies.py` for authentication help
+4. Check logs with `--verbose` flag
