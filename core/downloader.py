@@ -1,10 +1,14 @@
 import os
 from pathlib import Path
 from typing import Optional
-import yt_dlp
 import time
 import json
 import tempfile
+
+try:
+    import yt_dlp
+except ImportError as e:
+    raise ImportError("yt_dlp dependency not found. Install with 'pip install yt-dlp'") from e
 
 
 def download_video(url: str, output_dir: Path, use_cookies: bool = False) -> Path:
@@ -19,6 +23,7 @@ def download_video(url: str, output_dir: Path, use_cookies: bool = False) -> Pat
     Returns:
         Path to downloaded video file
     """
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_template = str(output_dir / "video.%(ext)s")
 
     # Base options - try with ipv6 disabled first to avoid some bot detection
@@ -89,36 +94,41 @@ def download_video(url: str, output_dir: Path, use_cookies: bool = False) -> Pat
 def _setup_cookies() -> Optional[Path]:
     """
     Setup cookies for YouTube authentication
-    
+
     Looks for cookies in multiple locations:
-    1. ~/.config/yt-dlp/cookies.txt (standard location)
-    2. Current directory/cookies.json (JSON format)
-    3. Current directory/example.cookies.json (JSON format)
-    
+    - ~/.config/yt-dlp/cookies.txt (standard location)
+    - ~/.config/yt-dlp/cookies.json (JSON format)
+    - ./cookies.txt (local)
+    - ./cookies.json (local JSON)
+    - ./example.cookies.json (local JSON)
+
     Returns:
         Path to cookies file or None if not found
     """
-    # Check standard yt-dlp location
-    standard_cookies = Path.home() / '.config' / 'yt-dlp' / 'cookies.txt'
-    if standard_cookies.exists():
-        return standard_cookies
-    
-    # Check for JSON cookies in current/project directory
-    json_cookie_locations = [
+    candidates = [
+        Path.home() / '.config' / 'yt-dlp' / 'cookies.txt',
+        Path.home() / '.config' / 'yt-dlp' / 'cookies.json',
+        Path.cwd() / 'cookies.txt',
         Path.cwd() / 'cookies.json',
+        Path.cwd() / 'example.cookies.json',
         Path(__file__).parent.parent / 'cookies.json',
     ]
-    
-    for json_file in json_cookie_locations:
-        if json_file.exists():
+
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+
+        if candidate.suffix.lower() == '.txt':
+            return candidate
+
+        if candidate.suffix.lower() == '.json':
             try:
-                # Convert JSON cookies to Netscape format for yt-dlp
-                txt_file = _convert_json_cookies_to_txt(json_file)
+                txt_file = _convert_json_cookies_to_txt(candidate)
                 if txt_file:
                     return txt_file
             except Exception as e:
-                print(f"  ⚠️  Failed to load cookies from {json_file}: {e}")
-    
+                print(f"  ⚠️  Failed to convert JSON cookies from {candidate}: {e}")
+
     return None
 
 

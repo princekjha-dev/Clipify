@@ -453,6 +453,13 @@ def _get_video_duration(video_path: Path) -> float:
         return 0.0
 
 
+def _get_cache_dir() -> Path:
+    """Return cache directory for silence detector"""
+    cache_dir = Path.home() / '.cache' / 'clipify' / 'silence_detector'
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+
 def _get_cache_key(video_path: Path, threshold: float, min_duration: float) -> str:
     """Generate cache key for silence detection results"""
     file_stats = video_path.stat()
@@ -461,15 +468,28 @@ def _get_cache_key(video_path: Path, threshold: float, min_duration: float) -> s
 
 
 def _load_from_cache(cache_key: str) -> Optional[List[SilenceRegion]]:
-    """Load cached silence regions (placeholder - implement with actual cache)"""
-    # TODO: Implement actual caching (e.g., pickle, json file, redis)
-    return None
+    """Load cached silence regions from local cache files"""
+    cache_file = _get_cache_dir() / f"{cache_key}.json"
+    if not cache_file.exists():
+        return None
+
+    try:
+        with open(cache_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        return [SilenceRegion(**item) for item in data]
+    except Exception:
+        return None
 
 
 def _save_to_cache(cache_key: str, regions: List[SilenceRegion]):
-    """Save silence regions to cache (placeholder - implement with actual cache)"""
-    # TODO: Implement actual caching
-    pass
+    """Save silence regions to local cache files"""
+    cache_file = _get_cache_dir() / f"{cache_key}.json"
+    try:
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            json.dump([r.__dict__ for r in regions], f, indent=2)
+    except Exception:
+        pass
 
 
 def trim_silence_from_clips(
