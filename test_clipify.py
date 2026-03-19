@@ -62,3 +62,33 @@ def test_setup_cookies_local_json(tmp_path, monkeypatch):
 
     # Should be a text file when derived from JSON
     assert found.suffix == '.txt'
+
+
+def test_transcribe_video_selects_gemini(monkeypatch, tmp_path):
+    monkeypatch.setenv("GEMINI_API_KEY", "fake_gemini_key")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    import core.transcriber as transcriber
+
+    monkeypatch.setattr(transcriber, '_transcribe_with_gemini', lambda video_path, language=None: [
+        {'start': 0.0, 'end': 1.0, 'text': 'gemini test', 'words': []}
+    ])
+
+    result = transcriber.transcribe_video(tmp_path / "dummy.mp4")
+    assert result[0]['text'] == 'gemini test'
+
+
+def test_transcribe_video_selects_anthropic(monkeypatch, tmp_path):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fake_anthropic_key")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    import core.transcriber as transcriber
+
+    monkeypatch.setattr(transcriber, '_transcribe_with_anthropic', lambda video_path, language=None: [
+        {'start': 0.0, 'end': 1.0, 'text': 'anthropic test', 'words': []}
+    ])
+
+    result = transcriber.transcribe_video(tmp_path / "dummy.mp4")
+    assert result[0]['text'] == 'anthropic test'
