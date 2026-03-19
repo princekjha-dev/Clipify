@@ -13,6 +13,7 @@ Workflow:
 
 import argparse
 import sys
+import time
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import json
@@ -73,6 +74,11 @@ Examples:
         "--video",
         type=str,
         help="Local video file path"
+    )
+    input_group.add_argument(
+        "--watch",
+        type=str,
+        help="Directory path to watch for new videos"
     )
     
     parser.add_argument(
@@ -139,10 +145,11 @@ def validate_inputs(args: argparse.Namespace, logger: Logger) -> Dict[str, Any]:
         "clip_count": args.clips,
         "min_length": Config.MIN_CLIP_LENGTH,
         "max_length": Config.MAX_CLIP_LENGTH,
-        "formats": Config.DEFAULT_FORMATS,
-        "quality": Config.VIDEO_QUALITY,
+        "formats": args.formats or Config.DEFAULT_FORMATS,
+        "quality": args.quality,
         "generate_captions": not args.no_captions,
         "verbose": args.verbose,
+        "cookies": Path(args.cookies) if args.cookies else None,
     }
     
     # Validate clip count
@@ -290,14 +297,16 @@ def process_youtube_url(url: str, config: Dict[str, Any], logger: Logger) -> Dic
     """Download and process YouTube video"""
     try:
         logger.info(f"📥 Downloading video from: {url}")
-        
+
         # Download video
         download_dir = config["output_dir"] / "downloads"
         download_dir.mkdir(parents=True, exist_ok=True)
-        
-        video_path = download_video(url, download_dir)
+
+        use_cookies = bool(config.get("cookies"))
+        video_path = download_video(url, download_dir, use_cookies=use_cookies)
+
         logger.success(f"Video downloaded: {video_path}")
-        
+
         # Process the downloaded video
         return process_video(video_path, config, logger)
         
@@ -308,8 +317,32 @@ def process_youtube_url(url: str, config: Dict[str, Any], logger: Logger) -> Dic
 
 def watch_folder(folder_path: Path, config: Dict[str, Any], logger: Logger) -> None:
     """Watch folder for new videos and process them"""
+    if not folder_path.exists() or not folder_path.is_dir():
+        raise ValidationError(f"Watch folder not found or not a directory: {folder_path}")
+
     logger.info(f"👁️  Watching folder: {folder_path}")
-    logger.error("Folder watching not yet implemented")
+    seen_files = set()
+
+    while True:
+        for path in folder_path.iterdir():
+            if not path.is_file():
+                continue
+
+            if path in seen_files:
+                continue
+
+            if path.suffix.lower() not in Config.SUPPORTED_VIDEO_EXTENSIONS:
+                continue
+
+            logger.info(f"🔎 New video detected: {path.name}")
+            try:
+                process_video(path, config, logger)
+                seen_files.add(path)
+                logger.success(f"Processed {path.name}")
+            except Exception as e:
+                logger.error(f"Failed to process {path.name}: {e}")
+
+        time.sleep(Config.POLL_INTERVAL_SECONDS)
 
 
 def main():
@@ -346,6 +379,10 @@ def main():
             if not video_path.exists():
                 raise ValidationError(f"Video file not found: {video_path}")
             results = process_video(video_path, config, logger_instance)
+
+        elif args.watch:
+            watch_folder(Path(args.watch), config, logger_instance)
+            results = {"moments": [], "clips": [], "errors": []}
         
         # Print results summary
         if results and "errors" in results:
