@@ -21,6 +21,24 @@ def get_available_providers(logger) -> Dict[str, Tuple]:
     load_dotenv()
     
     providers = {}
+
+    # Check OpenRouter (PRIMARY - multi-model gateway)
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    if openrouter_key and openrouter_key.strip():
+        try:
+            from ai.openrouter_provider import OpenRouterProvider
+            provider = OpenRouterProvider()
+            try:
+                if provider.health_check():
+                    providers["openrouter"] = (OpenRouterProvider, "✓ OpenRouter (Primary - Multi-model)", True)
+                else:
+                    providers["openrouter"] = (OpenRouterProvider, "✗ OpenRouter (health check failed)", False)
+            except Exception as e:
+                providers["openrouter"] = (OpenRouterProvider, f"✗ OpenRouter (Invalid key or connection error)", False)
+        except ImportError:
+            providers["openrouter"] = (None, "⚠ OpenRouter (library not installed: pip install openai)", False)
+    else:
+        providers["openrouter"] = (None, "⚠ OpenRouter (no API key set)", False)
     
     # Check Groq
     groq_key = os.getenv("GROQ_API_KEY")
@@ -111,7 +129,19 @@ def get_available_providers(logger) -> Dict[str, Tuple]:
             providers["gemini"] = (None, "⚠ Gemini (library not installed: pip install google-generativeai)", False)
     else:
         providers["gemini"] = (None, "⚠ Gemini (no API key set)", False)
+    return providers
 
+
+def select_provider(provider_name=None, logger=None):
+    """
+    Select and return the best available AI provider.
+    
+    Args:
+        provider_name: Optional preferred provider name
+        logger: Logger instance
+    
+    Returns:
+        Provider instance
     """
     
     logger.header("SELECTING AI PROVIDER")
@@ -212,7 +242,10 @@ def show_provider_status(logger):
         
         # Show missing API key hints
         if "no API key" in status:
-            if name == "groq":
+            if name == "openrouter":
+                logger.info(f"  → Set OPENROUTER_API_KEY environment variable")
+                logger.info(f"  → Get key: https://openrouter.ai/keys")
+            elif name == "groq":
                 logger.info(f"  → Set GROQ_API_KEY environment variable")
                 logger.info(f"  → Get key: https://console.groq.com/keys")
             elif name == "openai":
