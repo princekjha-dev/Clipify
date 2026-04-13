@@ -116,6 +116,7 @@ dmypy.json
 .pyre/
 
 # Video/Audio files
+output/
 *.mp4
 *.avi
 *.mkv

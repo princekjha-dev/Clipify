@@ -7,11 +7,11 @@ from pathlib import Path
 
 # Read README
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
+long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 # Read requirements
 requirements = []
-with open("requirements.txt", "r") as f:
+with open("requirements.txt", "r", encoding="utf-8") as f:
     for line in f:
         line = line.strip()
         if line and not line.startswith("#"):
@@ -25,7 +25,11 @@ setup(
     description="AI-Powered Viral Clip Generator from Videos",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/clipify",
+    url="https://github.com/princekjha-dev/Clipify",
+    project_urls={
+        "Issues": "https://github.com/princekjha-dev/Clipify/issues",
+        "Discussions": "https://github.com/princekjha-dev/Clipify/discussions",
+    },
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",

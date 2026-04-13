@@ -40,7 +40,7 @@ from captions.generator import generate_captions
 
 
 # Setup logger
-logger = Logger(verbose=False)
+logger = Logger()
 
 
 def setup_argparse() -> argparse.ArgumentParser:
@@ -138,9 +138,9 @@ Examples:
     parser.add_argument(
         "--ai",
         type=str,
-        choices=["groq", "deepseek", "openai", "anthropic", "gemini", "local"],
+        choices=["openrouter", "groq", "deepseek", "openai", "anthropic", "gemini", "local"],
         default=None,
-        help="Preferred AI provider (default auto-select)"
+        help="Preferred AI provider (default auto-select, openrouter is primary)"
     )
     
     return parser
@@ -361,7 +361,7 @@ def main():
     args = parser.parse_args()
     
     # Create logger with verbose setting
-    logger_instance = Logger(verbose=args.verbose)
+    logger_instance = Logger()
     
     try:
         # Handle cookies if provided
