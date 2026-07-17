@@ -1,0 +1,42 @@
+# Core dependencies
+yt-dlp>=2024.1.0          # YouTube downloader with latest fixes
+openai-whisper>=20231117  # Local speech-to-text
+python-dotenv>=1.0.0      # Environment variable loading
+
+# API clients
+openai>=1.3.0             # OpenAI API for GPT models
+groq>=0.9.0               # Groq API for fast LLM inference
+google-generativeai>=0.3.0 # Google Gemini API
+requests>=2.31.0          # HTTP requests
+
+# Video processing
+ffmpeg-python>=0.2.0      # FFmpeg wrapper
+opencv-python>=4.8.0      # Video processing
+pillow>=10.0.0            # Image processing
+
+# Audio processing
+librosa>=0.10.0           # Audio analysis
+soundfile>=0.12.0         # Audio file I/O
+numpy>=1.24.0             # Numerical computing
+scipy>=1.11.0             # Scientific computing
+
+# Natural Language Processing
+nltk>=3.8.1               # NLP toolkit
+textblob>=0.17.0          # Text processing
+
+# Data processing
+pandas>=2.0.0             # Data manipulation
+
+# Utilities
+python-ffmpeg>=1.0.16     # FFmpeg bindings
+pydantic>=2.0.0           # Data validation
+tqdm>=4.66.0              # Progress bars
+
+# Optional: For database support
+sqlalchemy>=2.0.0         # ORM for data storage
+
+# Development (optional)
+pytest>=7.4.0             # Testing framework
+pytest-cov>=4.0.0         # Coverage reporting
+black>=23.0.0             # Code formatting
+pylint>=3.0.0             # Linting
